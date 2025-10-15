@@ -454,6 +454,14 @@ export class Environment {
   public DROPBOX_APP_KEY = this.toOptionalString(environment.DROPBOX_APP_KEY);
 
   /**
+   * Redmine api key for embedding Redmine issues hosted on private instances
+   * Public redmine issues can be embedded without the need for this variable to be populated
+   */
+  @Public
+  @IsOptional()
+  public REDMINE_API_KEY = this.toOptionalString(environment.REDMINE_API_KEY);
+
+  /**
    * Sentry DSN for capturing errors and frontend performance.
    */
   @Public

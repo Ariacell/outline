@@ -131,6 +131,7 @@ router.get("/embeds/gitlab", renderEmbed);
 router.get("/embeds/github", renderEmbed);
 router.get("/embeds/dropbox", renderEmbed);
 router.get("/embeds/pinterest", renderEmbed);
+router.get("/embeds/redmine", renderEmbed);
 
 router.get("/doc/:documentSlug", shareDomains(), async (ctx, next) => {
   if (ctx.state?.rootShare) {

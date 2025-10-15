@@ -20,6 +20,7 @@ import Spotify from "./Spotify";
 import Trello from "./Trello";
 import Vimeo from "./Vimeo";
 import YouTube from "./YouTube";
+import Redmine from "./Redmine";
 
 export type EmbedProps = {
   isSelected: boolean;
@@ -223,6 +224,13 @@ const embeds: EmbedDescriptor[] = [
     ],
     transformMatch: (matches: RegExpMatchArray) => matches[0],
     icon: <Img src="/images/clickup.png" alt="ClickUp" />,
+  }),
+  new EmbedDescriptor({
+    title: "Redmine",
+    keywords: "project",
+    regexMatch: [new RegExp("^https?://(www.)?redmine.(.*)$")],
+    icon: <Img src="/images/redmine.png" alt="Redmine" $invertable />,
+    component: Redmine,
   }),
   new EmbedDescriptor({
     title: "Codepen",

@@ -2,6 +2,7 @@ import escape from "escape-html";
 import { Context, Next } from "koa";
 import env from "@server/env";
 import { InvalidRequestError } from "@server/errors";
+import fetch from "@server/utils/fetch";
 
 /**
  * Resize observer script that sends a message to the parent window when content is resized. Inject
@@ -113,6 +114,152 @@ ${iframeCheckScript(ctx)}
 </head>
 <body>
 <script type="text/javascript" src="${gistLink}"></script>
+${resizeObserverScript(ctx)}
+</body>
+`;
+    return;
+  }
+
+  if (
+    parsed.host.startsWith("www.redmine") &&
+    parsed.protocol === "https:" &&
+    ctx.path === "/embeds/redmine"
+  ) {
+    const res = await fetch(`${parsed.href}.json`, {
+      headers: {
+        "X-Redmine-API-Key": env.REDMINE_API_KEY ?? "",
+      },
+      timeout: 20000, // Redmine's API can be quite slow. The limiting factor should ideally be the user's selected max timeout, not the internal fetch timeout
+    });
+
+    const data = await res.json();
+    const issue = data.issue;
+
+    ctx.set("X-Frame-Options", "sameorigin");
+    ctx.type = "html";
+    ctx.body = `
+<html>
+<head>
+<style>body { margin: 0; }</style>
+<base target="_parent">
+${iframeCheckScript(ctx)}
+</head>
+<body>
+<style>
+  .redmine-card {
+    font-family: Arial, sans-serif;
+    display: flex;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    margin: 10px 0;
+  }
+
+  .redmine-card .left-section {
+    background-color: #f9f9f9;
+    padding: 12px;
+    min-width: 120px;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9em;
+    text-align: left;
+  }
+
+  .redmine-card .left-section .status {
+    font-weight: bold;
+    color: #2c3e50;
+  }
+
+  .redmine-card .left-section .priority {
+    color: #e74c3c;
+    font-weight: bold;
+  }
+
+  .redmine-card .left-section .issue-id {
+    color: #555;
+  }
+
+  .redmine-card .right-section {
+    flex-grow: 1;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .redmine-card .subject {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+
+  .redmine-card .details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    font-size: 0.95em;
+  }
+
+  .redmine-card .detail-item {
+    flex: 1 1 40%;
+    min-width: 120px;
+  }
+
+  .redmine-card .progress-bar-container {
+    flex: 1 1 100%;
+    margin-top: 6px;
+  }
+
+  .redmine-card .progress-bar {
+    background-color: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 10px;
+    margin-top: 4px;
+  }
+
+  .redmine-card .progress {
+    height: 100%;
+    background-color: #27ae60;
+    width: ${issue.done_ratio}%;
+  }
+
+  .redmine-card .assigned-to {
+    font-style: italic;
+    color: #555;
+    margin-top: 6px;
+  }
+</style>
+
+<div class="redmine-card">
+  <div class="left-section">
+  <a class="issue-id" href=${parsed.href}>#${issue.id}</a>
+  <div class="priority">${issue.priority.name}</div>
+  <div class="status">${issue.status.name}</div>
+  </div>
+
+  <div class="right-section">
+    <div class="subject">${issue.subject}</div>
+
+    <div class="details">
+      <div class="detail-item"><strong>Tracker:</strong> ${issue.tracker.name}</div>
+
+      <div class="progress-bar-container">
+        <strong>Progress:</strong>
+        <div class="progress-bar">
+          <div class="progress"></div>
+        </div>
+      </div>
+
+      <div class="assigned-to">Assigned to: ${issue.assigned_to}</div>
+    </div>
+  </div>
+</div>
 ${resizeObserverScript(ctx)}
 </body>
 `;
