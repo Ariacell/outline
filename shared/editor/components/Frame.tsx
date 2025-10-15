@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { Optional } from "utility-types";
 import { s } from "../../styles";
 import { sanitizeUrl } from "../../utils/urls";
+import LoadingSpinner from "./LoadingSpinner";
 
 type Props = Omit<
   Optional<React.ComponentProps<typeof Iframe>>,
@@ -46,6 +47,7 @@ const Frame = ({
   ...rest
 }: PropsWithRef) => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isContentLoaded, setIsContentLoaded] = useState(false);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -77,6 +79,7 @@ const Frame = ({
         isSelected ? `ProseMirror-selectednode ${className}` : className
       }
     >
+      {!isContentLoaded && <LoadingSpinner />}
       {isLoaded && (
         <Iframe
           ref={forwardedRef}
@@ -90,6 +93,7 @@ const Frame = ({
           src={sanitizeUrl(src)}
           referrerPolicy={referrerPolicy}
           allowFullScreen
+          onLoad={() => setIsContentLoaded(true)}
           {...rest}
         />
       )}
